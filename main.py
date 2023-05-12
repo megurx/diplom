@@ -7,9 +7,39 @@ import pygame
 from copy import deepcopy
 
 
+CHANCE = 1
+
+
 def drawSquare(screen, currentColour, currentColumn, cellSize, currentRow):
     pygame.draw.rect(screen, currentColour, [currentColumn * cellSize, currentRow * cellSize, (currentColumn + 1)
                                              * cellSize, (currentRow + 1) * cellSize])
+
+
+def countcolors(matrix, color):
+    k = 0
+    for row in matrix:
+        for cell in row:
+            if cell == color:
+                k += 1
+    return k
+
+
+def random_immune(matrix, color='3'):
+    for i in range(len(matrix)):
+        new_row = ''
+        for j in range(len(matrix[i])):
+            if matrix[i][j] == color:
+                t = random.randrange(1, 10001)
+                if t > 9900:
+                    print(1)
+                    new_row += '0'
+                else:
+                    print(2)
+                    new_row += matrix[i][j]
+            else:
+                new_row += matrix[i][j]
+        matrix[i] = new_row
+    return matrix
 
 
 def drawGenerationUniverse(cellCountX, cellCountY, universeTimeSeries):
@@ -302,10 +332,24 @@ for currentTimeStep in range(simulationIterations):
                 universeList[currentRow] = universeList[currentRow][:currentColumn - 1] + currentRowNeighbours[
                     1] + newState + \
                                            universeList[currentRow][currentColumn + 1:]
+            # try:
+            #     if (countcolors(universeTimeSeries[currentTimeStep], '3') + countcolors(universeTimeSeries[currentTimeStep],
+            #                                                                             '0')) / countcolors(
+            #             universeTimeSeries[currentTimeStep], '2') > CHANCE:
+            #         random_immune(universeTimeSeries[currentTimeStep])
+            # except ZeroDivisionError:
+            #     pass
+        try:
+            if countcolors(
+                    universeList, '2') / (countcolors(universeList, '3') + countcolors(universeList,
+                                                                                    '0')) > CHANCE:
+                universeList = random_immune(universeList)
+        except ZeroDivisionError:
+            pass
 
 np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 RES.pop(0)
-print(*RES, sep='\n')
+# print(*RES, sep='\n')
 pl.plot([x[-1] for x in RES], [x[3] for x in RES], 'green', label='Восприимчивые')
 pl.plot([x[-1] for x in RES], [x[2] for x in RES], 'red', label='Больные')
 pl.plot([x[-1] for x in RES], [x[0] for x in RES], 'blue', label='Выздоровевшие')
