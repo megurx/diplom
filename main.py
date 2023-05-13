@@ -7,8 +7,8 @@ import pygame
 from copy import deepcopy
 
 
-CHANCE = 1
-
+CHANCE = 0.5
+DIFFCHANCE = 0.5
 
 def drawSquare(screen, currentColour, currentColumn, cellSize, currentRow):
     pygame.draw.rect(screen, currentColour, [currentColumn * cellSize, currentRow * cellSize, (currentColumn + 1)
@@ -31,10 +31,8 @@ def random_immune(matrix, color='3'):
             if matrix[i][j] == color:
                 t = random.randrange(1, 10001)
                 if t > 9900:
-                    print(1)
                     new_row += '0'
                 else:
-                    print(2)
                     new_row += matrix[i][j]
             else:
                 new_row += matrix[i][j]
@@ -80,7 +78,7 @@ def drawGenerationUniverse(cellCountX, cellCountY, universeTimeSeries):
                 pygame.quit()
             else:
                 currentTimeStep += 1
-            pygame.time.delay(1000)
+            pygame.time.delay(100)
             pygame.display.set_caption("TimeStep %3i:  " % currentTimeStep)
             picnr += 1
             if picnr > 5:
@@ -127,17 +125,17 @@ def newStateVN(currentRowNeighbours, upperCharacter, lowerCharacter):
     newState = selfCharacter
     if selfCharacter == '3':  # .S->I
         if leftCharacter == '2' or rightCharacter == '2' or upperCharacter == '2' or lowerCharacter == '2':
-            Pichance = (1 - np.random.uniform())
+            Pichance = np.random.uniform()
             if 0 < Pichance < InfectedChance:
                 newState = '2'
             else:
-                Pdchance = (1 - np.random.normal(0.5, 1.0))
+                Pdchance = np.random.uniform()
                 if 0 < Pdchance < DeathResistanceChance:
                     newState = '4'
 
     elif selfCharacter == '2':
-        Prchance = (1 - np.random.normal(0.5, 1.0))
-        Pschance = (1 - np.random.normal(0.5, 1.0))
+        Prchance = np.random.uniform()
+        Pschance = np.random.uniform()
         if 0 < Prchance < ResistanceChance:
             newState = '0'
         else:
@@ -145,36 +143,35 @@ def newStateVN(currentRowNeighbours, upperCharacter, lowerCharacter):
                 newState = '4'
 
     elif selfCharacter == '0':
-        Pschance = (1 - np.random.normal(0.5, 1.0))
+        Pschance = np.random.uniform()
         if 0 < Pschance < LossOfImmunity:
             newState = '3'
         else:
-            Pdchance = (1 - np.random.normal(0.5, 1.0))
+            Pdchance = np.random.uniform()
             if 0 < Pdchance < DeathResistanceChance:
                 newState = '4'
 
     elif selfCharacter == '1':
         if leftCharacter == '3' or rightCharacter == '3' or upperCharacter == '3' or lowerCharacter == '3':
-            Pbchance = (1 - np.random.normal(0.5, 1.0))
+            Pbchance = np.random.uniform()
             if 0 < Pbchance < BirthChance:
                 newState = '3'
 
     elif selfCharacter == '1':
         if leftCharacter == '2' or rightCharacter == '2' or upperCharacter == '2' or lowerCharacter == '2':
-            Pichance = (1 - np.random.normal(0.5, 1.0))
+            Pichance = np.random.uniform()
             if 0 < Pichance < InfectedChance:
                 newState = '2'
 
     elif selfCharacter == '4':
         if leftCharacter == '0' or rightCharacter == '0' or upperCharacter == '0' or lowerCharacter == '0':
-            Plchance = (1 - np.random.normal(0.5, 1.0))
+            Plchance = np.random.uniform()
             if 0 < Plchance < BirthChance:
                 newState = '1'
     return newState
 
 
 def getNewState2Ddiff(currentRowNeighbours, upperCharacter, lowerCharacter):
-    difchance = 0.1
     leftCharacter = currentRowNeighbours[0]
     selfCharacter = currentRowNeighbours[1]
     rightCharacter = currentRowNeighbours[2]
@@ -192,7 +189,7 @@ def getNewState2Ddiff(currentRowNeighbours, upperCharacter, lowerCharacter):
         if v != '4' and v != '1' and v != '-':
             swap[k] = v
 
-    if np.random.uniform() > difchance:
+    if np.random.uniform() > DIFFCHANCE:
         try:
             q = random.choice(list(swap.keys()))
             selfCharacter = swap[q]
@@ -204,21 +201,21 @@ def getNewState2Ddiff(currentRowNeighbours, upperCharacter, lowerCharacter):
 
 InfectedChance = 0.5  # beta
 ResistanceChance = 0.025  # gamma
-LossOfImmunity = 0.001  # alpha
+LossOfImmunity = 0.1  # alpha
 BirthChance = 0.05  # epsilon
 DeathResistanceChance = 0.01  # rho
 DeathInfectedChance = 0.01  # rho1
 
-# InfectedChance = 0.2
-# ResistanceChance = 0.1
-# LossOfImmunity = 0.01
-# BirthChance = 0.1
+# InfectedChance = 0.5
+# ResistanceChance = 0.025
+# LossOfImmunity = 0.001
+# BirthChance = 0.05
 # DeathResistanceChance = 0.01
-# DeathInfectedChance = 0.001
+# DeathInfectedChance = 0.01
 
-simulationIterations = 50
-cellCountX = 10
-cellCountY = 10
+simulationIterations = 200
+cellCountX = 30
+cellCountY = 30
 hexagonLayout = False
 
 susceptibleCharacter = 'S'
@@ -265,7 +262,6 @@ RES = [InitVariables]
 universeTimeSeries = []
 
 for currentTimeStep in range(simulationIterations):
-    flag1 = True
     if currentTimeStep < 0:
         printGenerationUniverse(currentTimeStep, cellCountX, cellCountY, susceptibleCharacter, exposedCharacter,
                                 infectedCharacter, recoveredCharacter, deadCharacter)
@@ -332,13 +328,6 @@ for currentTimeStep in range(simulationIterations):
                 universeList[currentRow] = universeList[currentRow][:currentColumn - 1] + currentRowNeighbours[
                     1] + newState + \
                                            universeList[currentRow][currentColumn + 1:]
-            # try:
-            #     if (countcolors(universeTimeSeries[currentTimeStep], '3') + countcolors(universeTimeSeries[currentTimeStep],
-            #                                                                             '0')) / countcolors(
-            #             universeTimeSeries[currentTimeStep], '2') > CHANCE:
-            #         random_immune(universeTimeSeries[currentTimeStep])
-            # except ZeroDivisionError:
-            #     pass
         try:
             if countcolors(
                     universeList, '2') / (countcolors(universeList, '3') + countcolors(universeList,
